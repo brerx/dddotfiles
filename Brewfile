@@ -1,0 +1,31 @@
+brew 'tmux'
+brew 'wemux'
+brew 'ctop'
+
+cask 'raycast'
+cask 'keybase'
+cask 'gitkraken'
+cask 'slack'
+cask 'discord'
+cask 'gpg-suite'
+cask 'kitty'
+cask 'bruno'
+
+brew 'gh'
+brew 'ranger'
+brew 'ripgrep'
+brew 'ag'
+brew 'lynx'
+brew 'eza'
+brew 'fzf'
+brew 'bat'
+brew 'btop'
+brew 'csvlens'
+
+brew 'awscli'
+brew 'jq'
+brew 'docker-credential-helper-ecr'
+
+brew 'lastpass-cli'
+
+cask 'steam'
