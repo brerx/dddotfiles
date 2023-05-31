@@ -144,18 +144,26 @@ function! JumpToSameIndent(direction, inVisualMode)
   endif
 endfunction
 
+let g:copilot_filetypes = {
+    \ 'gitcommit': v:true,
+    \ 'markdown': v:true,
+    \ 'yaml': v:true
+    \ }
+
 source $HOME/.dotfiles/vim/dev/statusline.vim
 source $HOME/.dotfiles/vim/dev/mappings.vim
 
 " match buffer navigator colors with current theme
-execute 'autocmd FileType buffernavigator highlight BufferNavigatorModifiedFile ctermfg=' . accentText . ' ctermbg=NONE' 
-execute 'autocmd FileType buffernavigator highlight BufferNavigatorFile ctermfg=' . secondaryText . ' ctermbg=NONE' 
+execute 'autocmd FileType buffernavigator highlight BufferNavigatorModifiedFile ctermfg=' . accentText . ' ctermbg=NONE'
+execute 'autocmd FileType buffernavigator highlight BufferNavigatorFile ctermfg=' . secondaryText . ' ctermbg=NONE'
 
 if dotfilesTheme =~ '-light$'
-  autocmd FileType buffernavigator highlight BufferNavigatorDir ctermfg=0 ctermbg=NONE 
+  autocmd FileType buffernavigator highlight BufferNavigatorDir ctermfg=0 ctermbg=NONE
 endif
 
 highlight NormalFloat ctermbg=236
+
+let g:BufferNavigatorAmbiguousDirNames = [ "Edit", "Read" ]
 
 " For whatever reason, vim started to set the filetype for *.html files to sh
 augroup fixHtmlFiletype
