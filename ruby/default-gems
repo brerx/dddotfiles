@@ -1,3 +1,9 @@
 solargraph
 rubocop
 pry
+pry-doc
+pry-toys
+pry-byebug
+pry-theme
+pry-inline
+awesome_print
