@@ -1,0 +1,9 @@
+*.DS_Store
+*.sw?
+c_cpp_properties.json
+settings.json
+launch.json
+*.sln
+*.vscode
+tags
+Session.vim

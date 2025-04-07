@@ -1,0 +1,15 @@
+" currently breaks <C-i>
+unmap <Tab>
+
+let g:copilot_filetypes = {
+    \ 'gitcommit': v:true,
+    \ 'markdown': v:true,
+    \ 'yaml': v:true
+    \ }
+
+let g:BufferNavigatorAmbiguousDirNames = [ "Edit", "Read" ]
+
+augroup filetype_ruby
+    autocmd!
+    autocmd FileType ruby iab <buffer> pry require 'pry'; binding.pry
+augroup END
