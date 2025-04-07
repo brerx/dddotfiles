@@ -124,6 +124,10 @@ notify:
     Needs the notify file ~/.dotfiles-local/sounds/notify.wav
 npm-tabula-rasa:
   help: Recursively remove node_modules
+real-world:
+  help: Parse real_world stuff into csv
+  args:
+    - name: path to real_world folder
 set-theme:
   help: Set the theme for kitty, tmux and vim
   args:
