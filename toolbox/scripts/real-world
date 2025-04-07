@@ -7,7 +7,7 @@ require 'iwfm-ruby'
 
 def parse_file(file)
   file_contents = File.read(file)
-  data = YAML.safe_load(file_contents, permitted_classes: [Symbol, Time, Date])
+  data = YAML.safe_load(file_contents, permitted_classes: [Symbol, Time, Date, IWFM::Item])
 
   data.each do |entry|
     entry[:tenant_id] = file.split('/').last.split('-').first

@@ -1,0 +1,61 @@
+" colorscheme jellybeans
+
+" source $HOME/.dotfiles/vim/basic/lcars.vim
+
+" let g:airline#extensions#tabline#enabled = 1
+" let g:airline#extensions#tabline#formatter = 'default'
+" let g:airline_section_b = ''
+" let g:airline_section_z ='%P'
+" let g:airline_section_y = ''
+" let g:airline_theme = 'lcars'
+
+" let g:airline_powerline_fonts = 1
+
+set scrolloff=15
+
+set norelativenumber
+
+if exists('+colorcolumn')
+ let &colorcolumn="80"
+ highlight ColorColumn ctermbg=236
+endif
+
+" This selects the next closest text object.
+map + <Plug>(wildfire-fuel)
+
+" This selects the previous closest text object.
+vmap _ <Plug>(wildfire-water)
+
+" lua require('range-highlight').setup()
+
+" Re-enable join
+" nunmap <C-j>
+" Use :j instead
+
+let g:VimuxResetSequence = "C-c"
+
+set conceallevel=0 " short: cole
+
+command! -nargs=? Hcd call OpenCorrespondingArticle(<f-args>)
+
+function! OpenCorrespondingArticle(...) abort
+  " Get the current buffer's file path
+  let l:current_file = expand('%:p')
+
+  " Get the language code from the arguments, default to 'en'
+  let l:lang_code = a:0 > 0 ? a:1 : 'en'
+
+  " Use a regex to replace any language folder (_xx) with the specified language code, keeping the _docs/ part
+  let l:target_file = substitute(l:current_file, '_docs/_\w\+', '_docs/_' . l:lang_code, '')
+
+  " Close any existing vsplits
+  execute 'only'
+
+  " Open the target article in a vertical split
+  execute 'vsplit' l:target_file
+
+  " Set scrollbind for both windows
+  setlocal scrollbind
+  wincmd w
+  setlocal scrollbind
+endfunction
