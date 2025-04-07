@@ -1,0 +1,46 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require 'csv'
+require 'yaml'
+require 'iwfm-ruby'
+
+def parse_file(file)
+  file_contents = File.read(file)
+  data = YAML.safe_load(file_contents, permitted_classes: [Symbol, Time, Date, IWFM::Item])
+  tenant_id = file.split('/').last.split('-').first
+
+  data.each do |entry|
+    entry[:tenant_id] = tenant_id
+  end
+  data
+end
+
+def extract_keys(folder)
+  files = Dir.glob("#{folder}/*")
+  files.each do |file|
+    content = parse_file(file)
+    return content.first.keys if content.any?
+  end
+  []
+end
+
+def write_csv(folder, keys)
+  files = Dir.glob("#{folder}/*")
+  CSV.open("#{folder}.csv", 'wb') do |csv|
+    csv << keys
+    files.each do |file|
+      data = parse_file(file)
+      data.each do |entry|
+        csv << keys.map { |key| entry[key] }
+      end
+    end
+  end
+end
+
+folder = ARGV[0]
+keys = extract_keys(folder)
+
+puts "No Data Found" if keys.empty?
+
+write_csv(folder, keys)
