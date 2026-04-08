@@ -54,3 +54,5 @@ alias y="say -v 'Yuri'"
 alias yolo='rm -rf node_modules/ && ni'
 
 alias zshrc="n ~/.zshrc"
+
+alias dotfiles-update='~/source/dddotfiles/toolbox/scripts/dfu-tips'

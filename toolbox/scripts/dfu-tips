@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+# Wrapper around dotfiles-update that generates Claude Code spinner tips
+# for new features in tklepzig/dotfiles since the last run.
+
+DOTFILES_REPO="${DOTFILES_REPO:-tklepzig/dotfiles}"
+DOTFILES_BRANCH="${DOTFILES_BRANCH:-master}"
+DF_PATH="$HOME/.dotfiles"
+LAST_COMMIT_FILE="$HOME/.dotfiles-local/.klepzig-last-commit"
+SETTINGS_FILE="$HOME/.claude/settings.json"
+
+# Capture commit before update (persisted file takes priority)
+BEFORE_HASH=""
+if [ -f "$LAST_COMMIT_FILE" ]; then
+  BEFORE_HASH=$(cat "$LAST_COMMIT_FILE")
+elif [ -d "$DF_PATH/.git" ]; then
+  BEFORE_HASH=$(git -C "$DF_PATH" rev-parse HEAD 2>/dev/null || true)
+fi
+
+# Run the real dotfiles update
+/usr/bin/env ruby -e "$(curl -Ls "https://raw.githubusercontent.com/${DOTFILES_REPO}/${DOTFILES_BRANCH}/setup.rb")"
+
+# Get new hash after update
+NEW_HASH=""
+if [ -d "$DF_PATH/.git" ]; then
+  NEW_HASH=$(git -C "$DF_PATH" rev-parse HEAD 2>/dev/null || true)
+fi
+
+# Persist new hash for next run
+mkdir -p "$(dirname "$LAST_COMMIT_FILE")"
+[ -n "$NEW_HASH" ] && echo "$NEW_HASH" > "$LAST_COMMIT_FILE"
+
+# Nothing to compare
+if [ -z "$BEFORE_HASH" ]; then
+  echo ""
+  echo "dfu-tips: Commit hash recorded. Tips will be generated on the next update."
+  exit 0
+fi
+
+if [ "$BEFORE_HASH" = "$NEW_HASH" ]; then
+  exit 0
+fi
+
+echo ""
+echo "Generating Claude Code tips for upstream changes (${BEFORE_HASH:0:7} → ${NEW_HASH:0:7})..."
+
+# Fetch diff from GitHub API, filtered to shell/git/script/vim/tmux paths
+COMPARE=$(gh api "repos/${DOTFILES_REPO}/compare/${BEFORE_HASH}...${NEW_HASH}" \
+  --jq '
+    "COMMITS:\n" + (
+      [.commits[] | "  " + .sha[:7] + " " + (.commit.message | split("\n")[0])] | join("\n")
+    ) + "\n\nCHANGED FILES:\n" + (
+      [.files[]
+       | select(.filename | test("^(zsh/|git/|toolbox/scripts/|tmux/|vim/)"))
+       | "--- " + .filename + "\n" + ((.patch // "")[0:600])
+      ] | join("\n\n")
+    )
+  ' 2>/dev/null || true)
+
+if [ -z "$COMPARE" ]; then
+  echo "Could not fetch upstream diff (gh api failed). Skipping tip generation."
+  exit 0
+fi
+
+# Build prompt in a temp file to avoid quoting issues
+PROMPT_FILE=$(mktemp)
+cat > "$PROMPT_FILE" << 'PROMPT_EOF'
+You are helping maintain Claude Code spinner tips for a developer's dotfiles (based on tklepzig/dotfiles).
+
+The diff below shows upstream changes. Generate a JSON array of tip strings for
+new or changed shell aliases, scripts, keybindings, or git commands.
+
+Rules:
+- Output ONLY a valid JSON array of strings — no markdown, no explanation
+- Each tip ≤ 100 chars
+- Format: "command/key — what it does"
+- Only include tips for genuinely new or changed things visible in the diff
+- If nothing tip-worthy changed, output: []
+
+PROMPT_EOF
+printf '%s\n' "$COMPARE" >> "$PROMPT_FILE"
+
+# Run Claude in print mode to generate tips
+TIPS_FILE=$(mktemp)
+claude -p "$(cat "$PROMPT_FILE")" > "$TIPS_FILE" 2>/dev/null || echo "[]" > "$TIPS_FILE"
+rm -f "$PROMPT_FILE"
+
+# Merge new tips into ~/.claude/settings.json
+python3 - "$SETTINGS_FILE" "$TIPS_FILE" << 'PYEOF'
+import json, sys
+
+settings_file = sys.argv[1]
+tips_file = sys.argv[2]
+
+with open(tips_file) as f:
+    raw = f.read().strip()
+
+try:
+    new_tips = json.loads(raw)
+    assert isinstance(new_tips, list)
+except Exception as e:
+    print(f"dfu-tips: Could not parse Claude response as JSON ({e}). Skipping.")
+    sys.exit(0)
+
+if not new_tips:
+    print("dfu-tips: No new tips generated.")
+    sys.exit(0)
+
+with open(settings_file) as f:
+    settings = json.load(f)
+
+existing = settings.get('spinnerTipsOverride', {}).get('tips', [])
+to_add = [t for t in new_tips if isinstance(t, str) and t not in existing]
+
+if to_add:
+    settings.setdefault('spinnerTipsOverride', {})['tips'] = existing + to_add
+    with open(settings_file, 'w') as f:
+        json.dump(settings, f, indent=2)
+    print(f"dfu-tips: Added {len(to_add)} new tip(s) to ~/.claude/settings.json:")
+    for t in to_add:
+        print(f"  • {t}")
+else:
+    print("dfu-tips: No new tips to add (already up to date).")
+PYEOF
+
+rm -f "$TIPS_FILE"
