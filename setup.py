@@ -361,6 +361,14 @@ def configure_ruby():
         force_symlink(f"{DF_PATH}/ruby/rubocop.yml", f"{HOME}/.rubocop.yml")
 
 
+def configure_nodejs():
+    with Logger.log("Configuring nodejs"):
+        Logger.log("Symlinking default npm packages configuration")
+        force_symlink(
+            f"{DF_PATH}/nodejs/default-npm-packages", f"{HOME}/.default-npm-packages"
+        )
+
+
 def resolve_modern_python():
     # `minimum` is a variable, not a literal, on purpose: pyright constant-folds
     # `sys.version_info >= (3, 11)` against the interpreter it runs under (modern),
@@ -676,6 +684,7 @@ def install(variant=DF_VARIANT):
 
     configure_bc()
     configure_ruby()
+    configure_nodejs()
 
     with Logger.log("Initializing toolbox"):
         add_link_with_override(f"{DF_PATH}/toolbox/init.zsh", f"{HOME}/.zshrc")
@@ -786,6 +795,9 @@ def uninstall():
 
     Logger.log("Removing default gems configuration")
     Path(f"{HOME}/.default-gems").unlink(missing_ok=True)
+
+    Logger.log("Removing default npm packages configuration")
+    Path(f"{HOME}/.default-npm-packages").unlink(missing_ok=True)
 
     Logger.log("Removing rubocop configuration")
     Path(f"{HOME}/.rubocop.yml").unlink(missing_ok=True)
