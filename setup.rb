@@ -347,6 +347,11 @@ def install(variant = DF_VARIANT)
     `ln -sf #{DF_PATH}/ruby/rubocop.yml #{HOME}/.rubocop.yml`
   end
 
+  Logger.log 'Configuring nodejs' do
+    Logger.log 'Symlinking default npm packages configuration'
+    `ln -sf #{DF_PATH}/nodejs/default-npm-packages #{HOME}/.default-npm-packages`
+  end
+
   Logger.log 'Initializing toolbox' do
     # TODO: Only when in full mode?
     add_link_with_override "#{DF_PATH}/toolbox/init.zsh", "#{HOME}/.zshrc"
@@ -508,6 +513,9 @@ def uninstall
 
   Logger.log 'Removing default gems configuration'
   `rm -f #{HOME}/.default-gems`
+
+  Logger.log 'Removing default npm packages configuration'
+  `rm -f #{HOME}/.default-npm-packages`
 
   Logger.log 'Removing rubocop configuration'
   `rm -f #{HOME}/.rubocop.yml`
